@@ -1,0 +1,4 @@
+anthropic==2.14.0
+numpy==2.5.5
+playwright==1.65.2
+soundfile==0.14.0

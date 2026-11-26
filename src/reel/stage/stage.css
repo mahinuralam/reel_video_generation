@@ -1,0 +1,140 @@
+@font-face {
+  font-family: "Inter";
+  src: url("../../../assets/fonts/Inter.ttf");
+  font-weight: 100 900;
+}
+
+:root {
+  --text: #f4f6ff;
+  --muted: #a9b2d3;
+  --blue: #7c9cff;
+  --teal: #5eead4;
+  --violet: #a78bfa;
+  --pink: #f472b6;
+  --amber: #fbbf24;
+  --red: #f87171;
+  --green: #4ade80;
+  --ink: #070b18;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1080px; height: 1920px; overflow: hidden; background: transparent; }
+body {
+  font-family: "Inter", "DejaVu Sans", sans-serif;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+#stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; }
+#stage > div { position: absolute; inset: 0; }
+
+/* Face beats are drawn as a transparent overlay on top of the avatar video. */
+body.face #bg, body.face #header, body.face #scene { display: none; }
+#scrim { display: none; }
+/* Split beats: the graphic fills the top half and fades into the avatar below it. */
+body.split #header { display: none; }
+body.split #bg { bottom: auto; height: 1000px; -webkit-mask-image: linear-gradient(180deg, #000 90%, transparent 100%); }
+body.face #scrim, body.split #scrim {
+  display: block;
+  background: linear-gradient(180deg, rgba(6, 9, 20, 0) 52%, rgba(6, 9, 20, 0.5) 76%, rgba(6, 9, 20, 0.72) 100%);
+}
+
+/* ---------- header (graphic beats) ---------- */
+.hdr { position: absolute; left: 80px; top: 196px; display: flex; align-items: center; gap: 16px; }
+.hdr .dot { width: 16px; height: 16px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 18px var(--teal); }
+.hdr .topic { font-size: 28px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+.progress { position: absolute; left: 80px; top: 252px; width: 920px; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+.progress i { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--blue), var(--teal)); }
+
+/* ---------- shared pieces ---------- */
+.content { position: absolute; left: 80px; right: 80px; top: 310px; }
+.kicker { font-size: 34px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--teal); margin-bottom: 18px; }
+.title { font-size: 80px; font-weight: 800; line-height: 1.07; letter-spacing: -0.022em; text-wrap: balance; }
+.card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.035));
+  border: 2px solid rgba(255, 255, 255, 0.11);
+  border-radius: 36px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+.ic { display: flex; align-items: center; justify-content: center; flex: none; border-radius: 26px; color: #fff; }
+.ic svg { width: 56%; height: 56%; }
+.tone0 { background: linear-gradient(135deg, #6c8cff, #4f6bf0); }
+.tone1 { background: linear-gradient(135deg, #2dd4bf, #0ea5a4); }
+.tone2 { background: linear-gradient(135deg, #a78bfa, #7c5cf0); }
+.tone3 { background: linear-gradient(135deg, #f472b6, #e0488f); }
+.tone4 { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+.tone5 { background: linear-gradient(135deg, #4ade80, #16a34a); }
+.tone-warn { background: linear-gradient(135deg, #fbbf24, #f97316); }
+.tone-good { background: linear-gradient(135deg, #4ade80, #16a34a); }
+
+/* ---------- scene: checklist ---------- */
+.s-checklist .titles { position: relative; height: 172px; }
+.s-checklist .titles .title { position: absolute; left: 0; right: 0; top: 0; }
+.s-checklist .titles .alt { color: var(--teal); }
+.s-checklist .rows { margin-top: 44px; display: flex; flex-direction: column; gap: 22px; }
+.s-checklist .row { height: 148px; display: flex; align-items: center; gap: 32px; padding: 0 34px; }
+.s-checklist .row .ic { width: 88px; height: 88px; }
+.s-checklist .row .label { flex: 1; font-size: 48px; font-weight: 700; letter-spacing: -0.01em; }
+.s-checklist .row .tick { width: 64px; height: 64px; border-radius: 50%; background: var(--green); color: #052e16; display: flex; align-items: center; justify-content: center; flex: none; }
+.s-checklist .row .tick svg { width: 60%; height: 60%; stroke-width: 3.2; }
+.s-checklist .row.done { border-color: rgba(74, 222, 128, 0.55); }
+
+/* ---------- scene: grid ---------- */
+.s-grid .kicker { color: var(--violet); }
+.s-grid .tiles { margin-top: 44px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+.s-grid .tile { height: 214px; padding: 30px 32px; display: flex; flex-direction: column; justify-content: space-between; }
+.s-grid .tile .ic { width: 80px; height: 80px; border-radius: 24px; }
+.s-grid .tile .label { font-size: 43px; font-weight: 700; line-height: 1.1; letter-spacing: -0.012em; }
+
+/* ---------- scene: chat ---------- */
+.s-chat .kicker { color: var(--blue); }
+.s-chat .window { margin-top: 44px; overflow: hidden; }
+.s-chat .bar { height: 100px; display: flex; align-items: center; gap: 20px; padding: 0 34px; border-bottom: 2px solid rgba(255, 255, 255, 0.09); }
+.s-chat .bar .ic { width: 58px; height: 58px; border-radius: 50%; }
+.s-chat .bar .name { font-size: 36px; font-weight: 700; }
+.s-chat .bar .status { margin-left: auto; display: flex; align-items: center; gap: 12px; font-size: 26px; font-weight: 600; color: var(--muted); }
+.s-chat .bar .status i { width: 14px; height: 14px; border-radius: 50%; background: var(--green); }
+.s-chat .msgs { padding: 36px 34px 40px; display: flex; flex-direction: column; gap: 28px; }
+.s-chat .msg { position: relative; font-size: 40px; font-weight: 600; line-height: 1.26; padding: 26px 32px; }
+.s-chat .msg.user { align-self: flex-end; max-width: 80%; background: linear-gradient(135deg, #6c8cff, #8b6cff); border-radius: 34px 34px 10px 34px; transform-origin: 100% 100%; }
+.s-chat .msg.assistant { align-self: flex-start; max-width: 86%; background: rgba(255, 255, 255, 0.09); border: 2px solid rgba(255, 255, 255, 0.11); border-radius: 34px 34px 34px 10px; transform-origin: 0 100%; }
+.s-chat .msg .rest { visibility: hidden; }
+.s-chat .msg .caret { display: inline-block; width: 0; height: 1em; position: relative; vertical-align: -0.12em; }
+.s-chat .msg .caret::after { content: ""; position: absolute; left: 3px; top: 0; width: 5px; height: 100%; border-radius: 2px; background: #fff; }
+.s-chat .msg .dots { position: absolute; left: 32px; top: 40px; display: flex; gap: 12px; }
+.s-chat .msg .dots i { width: 16px; height: 16px; border-radius: 50%; background: var(--muted); display: block; }
+
+/* ---------- scene: callout ---------- */
+.s-callout { text-align: center; top: 330px; }
+.s-callout .kicker { color: var(--amber); }
+.s-callout .badge { position: relative; width: 210px; height: 210px; margin: 34px auto 0; }
+.s-callout .badge .ring { position: absolute; inset: 0; border-radius: 50%; border: 6px solid var(--amber); }
+.s-callout .badge .ic { position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 20px 60px rgba(251, 191, 36, 0.35); }
+.s-callout .badge .ic svg { width: 54%; height: 54%; stroke-width: 2.2; color: #3b1d00; }
+.s-callout .title { font-size: 92px; margin-top: 44px; }
+.s-callout .points { margin-top: 54px; display: flex; flex-direction: column; gap: 26px; text-align: left; }
+.s-callout .point { min-height: 164px; display: flex; align-items: center; gap: 32px; padding: 28px 34px; }
+.s-callout .point .ic { width: 92px; height: 92px; }
+.s-callout .point .label { font-size: 46px; font-weight: 700; line-height: 1.14; letter-spacing: -0.01em; }
+
+/* ---------- overlays on face beats ---------- */
+.lower-third { position: absolute; left: 70px; top: 1140px; display: flex; align-items: stretch; gap: 26px; padding: 26px 38px 28px 26px; border-radius: 28px; background: rgba(8, 12, 28, 0.8); border: 2px solid rgba(255, 255, 255, 0.12); transform-origin: 0 50%; }
+.lower-third .bar { width: 10px; border-radius: 5px; background: linear-gradient(180deg, var(--blue), var(--teal)); }
+.lower-third .lt-title { font-size: 58px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
+.lower-third .lt-sub { font-size: 33px; font-weight: 600; color: #cfd6f2; margin-top: 8px; }
+.keywords { position: absolute; left: 0; right: 0; top: 1180px; display: flex; justify-content: center; gap: 22px; }
+.keywords .pill { padding: 20px 36px; border-radius: 999px; font-size: 46px; font-weight: 800; letter-spacing: -0.01em; color: #fff; box-shadow: 0 14px 34px rgba(0, 0, 0, 0.4); }
+
+/* ---------- captions ---------- */
+#captions { display: flex; align-items: center; justify-content: center; inset: auto !important; left: 60px !important; right: 60px !important; top: 1336px !important; height: 200px; }
+body.split #captions { top: 1710px !important; }
+.cap { text-align: center; font-size: 68px; font-weight: 800; line-height: 1.14; letter-spacing: -0.012em; }
+.cap .w {
+  display: inline-block;
+  margin: 0 13px;
+  color: #fff;
+  -webkit-text-stroke: 12px rgba(6, 9, 20, 0.94);
+  paint-order: stroke fill;
+  text-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+}
+.cap .w.on { color: #ffd84d; }

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Reel stage</title>
+<link rel="stylesheet" href="stage.css">
+</head>
+<body>
+<!--
+  One 1080x1920 frame of the reel. Nothing here animates on its own: the renderer calls
+  Stage.init(timeline, beatId) once, then Stage.render(t) for every frame and takes a screenshot,
+  so every frame is a pure function of its time and renders are repeatable.
+-->
+<div id="stage">
+  <div id="bg"></div>
+  <div id="header"></div>
+  <div id="scene"></div>
+  <div id="scrim"></div>
+  <div id="overlay"></div>
+  <div id="captions"></div>
+</div>
+<script src="anim.js"></script>
+<script src="icons.js"></script>
+<script src="scenes.js"></script>
+<script src="stage.js"></script>
+</body>
+</html>

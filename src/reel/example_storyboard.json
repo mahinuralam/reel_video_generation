@@ -1,0 +1,187 @@
+{
+    "name": "example",
+    "topic": "Intro to ChatGPT",
+    "face_template": "template.json",
+    "fps": 25,
+    "tail": 0.6,
+    "music": "Upbeat, energetic electro-pop instrumental at about 120 BPM with punchy drums, a bouncy synth bass and bright plucks, no vocals",
+    "beats": [
+        {
+            "id": "hook",
+            "type": "face",
+            "lines": [
+                "Hello everyone!",
+                "Today, I’m going to introduce you to ChatGPT, an AI-powered conversational tool developed by OpenAI."
+            ],
+            "overlay": {
+                "kind": "lower_third",
+                "title": "Intro to ChatGPT",
+                "subtitle": "An AI-powered conversational tool",
+                "cue": "introduce"
+            }
+        },
+        {
+            "id": "assistant",
+            "type": "split",
+            "scene": "checklist",
+            "lines": [
+                "Have you ever wished you had a personal assistant who could answer your questions, explain difficult topics, help you write, or generate creative ideas? ChatGPT can help you do all of these things."
+            ],
+            "data": {
+                "kicker": "Imagine",
+                "title": "A personal assistant that can…",
+                "items": [
+                    {
+                        "icon": "chat",
+                        "label": "Answer your questions",
+                        "cue": "answer"
+                    },
+                    {
+                        "icon": "bulb",
+                        "label": "Explain difficult topics",
+                        "cue": "explain"
+                    },
+                    {
+                        "icon": "pencil",
+                        "label": "Help you write",
+                        "cue": "help"
+                    },
+                    {
+                        "icon": "sparkles",
+                        "label": "Generate creative ideas",
+                        "cue": "generate"
+                    }
+                ],
+                "conclusion": {
+                    "title": "ChatGPT can do all of these",
+                    "cue": "ChatGPT"
+                }
+            }
+        },
+        {
+            "id": "uses",
+            "type": "visual",
+            "scene": "grid",
+            "lines": [
+                "You can use ChatGPT to learn new concepts, write emails, summarize documents, solve problems, practice a language, or even write code."
+            ],
+            "data": {
+                "kicker": "Everyday uses",
+                "title": "What you can use it for",
+                "items": [
+                    {
+                        "icon": "cap",
+                        "label": "Learn new concepts",
+                        "cue": "learn"
+                    },
+                    {
+                        "icon": "mail",
+                        "label": "Write emails",
+                        "cue": "write"
+                    },
+                    {
+                        "icon": "doc",
+                        "label": "Summarize documents",
+                        "cue": "summarize"
+                    },
+                    {
+                        "icon": "target",
+                        "label": "Solve problems",
+                        "cue": "solve"
+                    },
+                    {
+                        "icon": "globe",
+                        "label": "Practice a language",
+                        "cue": "practice"
+                    },
+                    {
+                        "icon": "code",
+                        "label": "Write code",
+                        "cue": "write#2"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "talk",
+            "type": "split",
+            "scene": "chat",
+            "lines": [
+                "One of its most interesting features is that you can communicate with it using natural language, just like having a conversation with another person."
+            ],
+            "data": {
+                "kicker": "How it works",
+                "title": "Just talk to it",
+                "messages": [
+                    {
+                        "role": "user",
+                        "text": "Can you explain photosynthesis like I'm ten?",
+                        "cue": "communicate"
+                    },
+                    {
+                        "role": "assistant",
+                        "text": "Sure! Plants are like tiny chefs. They use sunlight, water and air to cook their own food.",
+                        "cue": "natural"
+                    },
+                    {
+                        "role": "user",
+                        "text": "That makes sense, thanks!",
+                        "cue": "conversation"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "caution",
+            "type": "visual",
+            "scene": "callout",
+            "lines": [
+                "However, ChatGPT is not perfect. Sometimes it can provide incorrect information, so it’s important to verify important answers."
+            ],
+            "data": {
+                "kicker": "Heads up",
+                "title": "It’s not perfect",
+                "title_cue": "not",
+                "points": [
+                    {
+                        "icon": "alert",
+                        "tone": "warn",
+                        "label": "It can give incorrect information",
+                        "cue": "incorrect"
+                    },
+                    {
+                        "icon": "shield",
+                        "tone": "good",
+                        "label": "Verify important answers",
+                        "cue": "verify"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "close",
+            "type": "face",
+            "lines": [
+                "Overall, ChatGPT is a powerful tool that can make learning, working, and creating easier and more efficient.",
+                "Thank you!"
+            ],
+            "overlay": {
+                "kind": "keywords",
+                "items": [
+                    {
+                        "label": "Learning",
+                        "cue": "learning"
+                    },
+                    {
+                        "label": "Working",
+                        "cue": "working"
+                    },
+                    {
+                        "label": "Creating",
+                        "cue": "creating"
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -1,0 +1,16 @@
+# Secrets
+.env
+
+# Installed or built on the server (src/setup/setup.sh, webapp setup)
+env/
+.cache/
+
+# Your inputs and everything the pipeline makes
+inputs/
+reels/
+outputs/
+logs/
+
+# Python
+__pycache__/
+*.pyc

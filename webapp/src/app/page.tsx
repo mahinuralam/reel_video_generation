@@ -21,6 +21,7 @@ export default function Create() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [photoId, setPhotoId] = useState<string | null>(null);
   const [voiceId, setVoiceId] = useState<string | null>(null);
+  const [title, setTitle] = useState('');
   const [script, setScript] = useState('');
   const [transcript, setTranscript] = useState('');
   const [note, setNote] = useState<{ text: string; bad?: boolean } | null>(null);
@@ -81,7 +82,7 @@ export default function Create() {
     e.preventDefault();
     if (!canGo) return;
     setBusy('submit'); setErrors([]);
-    const r = await api<{ id?: string; errors?: string[] }>('/api/jobs', 'POST', { script, photoId: photo, voiceId: voice });
+    const r = await api<{ id?: string; errors?: string[] }>('/api/jobs', 'POST', { title, script, photoId: photo, voiceId: voice });
     if (r.ok && r.data.id) { router.push(`/jobs/${r.data.id}`); return; }
     setErrors(r.data.errors || ['Could not add the video']);
     setBusy(null);
@@ -100,6 +101,9 @@ export default function Create() {
 
       <form className="create" onSubmit={submit} noValidate>
         <div className="prompt">
+          <label htmlFor="title" className="sr-only">Title</label>
+          <input id="title" className="prompt-title" maxLength={100} value={title} onChange={(e) => setTitle(e.target.value)}
+            placeholder="Title (optional)" />
           <label htmlFor="script" className="sr-only">Script</label>
           <textarea id="script" rows={6} value={script} onChange={(e) => setScript(e.target.value)}
             placeholder="Write your script here…" />

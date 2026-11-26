@@ -85,6 +85,7 @@ with sync_playwright() as p:
     page.wait_for_load_state("networkidle")
     gen = page.get_by_role("button", name="Generate video")
     check(gen.is_disabled(), "generate is disabled without a script")
+    page.get_by_role("textbox", name="Title").fill(f"UI Check {STAMP}: My first reel!")
     page.get_by_role("textbox", name="Script", exact=True).fill(f"UI check {STAMP}. Welcome to this week's update.\nI'll walk you through what we tried and what we plan to do next.")
     check("words" in page.locator(".meta").inner_text(), "estimate shows under the script")
     page.locator("input[type=file][accept^=image]").set_input_files(PHOTO)
@@ -100,7 +101,7 @@ with sync_playwright() as p:
     page.wait_for_url("**/jobs/**")
     check("/jobs/" in page.url, "generating opens the video page")
     page.wait_for_selector("h1.title")
-    check(page.locator("h1.title").inner_text() == f"ui_check_{STAMP}", "the video is named from the script")
+    check(page.locator("h1.title").inner_text() == f"UI Check {STAMP}: My first reel!", "the video shows the typed title")
     page.wait_for_selector(".step.active", timeout=15000)
     page.wait_for_timeout(2500)
     page.screenshot(path=f"{args.out}/job_running_1440.png", full_page=True)
@@ -129,11 +130,11 @@ with sync_playwright() as p:
     # ---- videos page ----
     print("\n4. videos")
     page.wait_for_selector(".vcard")
-    check(page.locator(".vcard", has_text=f"ui_check_{STAMP}").count() == 1, "the new video is listed")
-    page.locator(".vcard", has_text=f"ui_check_{STAMP}").click()
+    check(page.locator(".vcard", has_text=f"UI Check {STAMP}").count() == 1, "the new video is listed by its title")
+    page.locator(".vcard", has_text=f"UI Check {STAMP}").click()
     page.wait_for_url("**/jobs/**")
     page.wait_for_selector("h1.title")
-    check(page.locator("h1.title").inner_text() == f"ui_check_{STAMP}", "a card opens its video")
+    check(page.locator("h1.title").inner_text() == f"UI Check {STAMP}: My first reel!", "a card opens its video")
 
     noise = [e for e in errors if "favicon" not in e]
     check(not noise, "no console or page errors", "\n    " + "\n    ".join(noise[:10]))

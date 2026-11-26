@@ -4,6 +4,8 @@ Web app for the video pipeline: choose an image and a voice, type a script, pres
 the progress and download the video. It uses Next.js and MongoDB, plus a worker that runs
 `src/make_video.sh` one job at a time.
 
+![Avatar Studio](../docs/avatar-studio.png)
+
 ## Setup
 
 Set up the pipeline first (see the [project README](../README.md)). Then, from the project root on a

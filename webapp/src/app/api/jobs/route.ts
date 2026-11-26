@@ -11,7 +11,7 @@ export async function GET() {
   return NextResponse.json({ jobs: docs.map(serialize), queue: await queueAhead(db) });
 }
 
-// POST /api/jobs  body: { script, photoId?, voiceId? }  → 201 { id, name } | 422 { errors, field }
+// POST /api/jobs  body: { script, title?, photoId?, voiceId? }  → 201 { id, name, title } | 422 { errors, field }
 export async function POST(req: Request) {
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return NextResponse.json({ errors: ['Body must be JSON'] }, { status: 400 }); }

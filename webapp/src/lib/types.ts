@@ -36,7 +36,8 @@ export interface JobOutput {
 
 export interface Job {
   _id: string;
-  name: string;
+  name: string;         // file-safe, used for its folders (e.g. outputs/reels/<name>/)
+  title?: string;       // what the user called it; any text
   status: JobStatus;
   input: JobInput;
   estimate: { speechSec: number; minutes: number; costUsd: number };

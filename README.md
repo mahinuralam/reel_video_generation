@@ -3,6 +3,8 @@
 Turns a script, a photo and a voice clip into a 1080×1920 video of that person presenting it, with
 animated graphics, captions and background music. All AI models run in the cloud; no GPU needed.
 
+![Avatar Studio, the web app](docs/avatar-studio.png)
+
 | Step | Model | Script |
 |---|---|---|
 | 0 Design | Claude Opus 5.5 (Anthropic API) | `src/reel/write_storyboard.py` |
@@ -56,6 +58,7 @@ src/reel/             design, timing, rendering, music, assembly; stage/ is the 
 src/voice/            voice cloning and transcription
 src/setup/            common.sh (paths + keys), setup.sh
 webapp/               Avatar Studio web app
+docs/                 README images
 ```
 
 Not in git: `.env`, `env/`, `inputs/`, `reels/`, `outputs/`, `logs/`.

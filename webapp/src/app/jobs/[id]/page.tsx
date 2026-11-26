@@ -74,7 +74,7 @@ export default function JobPage() {
         <Link href="/library" className="back">← Videos</Link>
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <div className="row">
-            <h1 className="title" style={{ overflowWrap: 'anywhere' }}>{job.name}</h1>
+            <h1 className="title" style={{ overflowWrap: 'anywhere' }}>{job.title || job.name}</h1>
             <StatusBadge job={job} />
           </div>
           <div className="row">

@@ -119,6 +119,11 @@ await f.body?.cancel();
 r = await call('/api/jobs', 'POST', { script });
 check(r.status === 201 && r.data.name === `e2e_run_${stamp}_2`, `the same script gets a new name (${r.data.name})`);
 await call(`/api/jobs/${r.data.id}/cancel`, 'POST');
+r = await call('/api/jobs', 'POST', { script, title: `  Café Tips #1: ${stamp} ✨ ` });
+check(r.status === 201 && r.data.title === `Café Tips #1: ${stamp} ✨` && r.data.name === `cafe_tips_1_${stamp}`, `any text works as a title, with a file-safe name made from it (${r.data.title} → ${r.data.name})`);
+await call(`/api/jobs/${r.data.id}/cancel`, 'POST');
+r = await call('/api/jobs', 'POST', { script, title: 'x'.repeat(101) });
+check(r.status === 422 && r.data.field === 'title', 'a title over 100 characters is refused');
 
 console.log('\n5. failure, retry and remove');
 r = await call('/api/jobs', 'POST', { script: 'This one will FAIL_TEST on purpose during the second segment of the video please.' });

@@ -15,7 +15,7 @@ export function VideoCard({ job }: { job: Job }) {
         <span className="vbadge"><StatusBadge job={job} /></span>
         {out ? <span className="len">{fmtDuration(out.durationSec)}</span> : null}
       </div>
-      <span className="vname">{job.name}</span>
+      <span className="vname">{job.title || job.name}</span>
       <span className="muted small">{fmtWhen(job.finishedAt || job.createdAt)}</span>
     </Link>
   );

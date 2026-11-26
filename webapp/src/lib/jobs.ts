@@ -10,6 +10,7 @@ import type { Job } from './types';
 
 const NAME_RE = /^[a-z0-9][a-z0-9_]{1,47}$/;
 const MAX_WORDS = 600; // ~4 min of speech
+const MAX_TITLE = 100;
 
 /** Files and folders a job writes (project-relative). If any exists the name is taken. */
 function pathsFor(name: string): string[] {
@@ -21,11 +22,24 @@ async function nameTaken(db: Db, name: string): Promise<boolean> {
   return !!(await db.collection('jobs').findOne({ name })) || pathsFor(name).some((p) => fs.existsSync(abs(p)));
 }
 
-/** A free name made from the script's first words, e.g. "hello_everyone_welcome" or "hello_everyone_welcome_2". */
-async function autoName(db: Db, script: string): Promise<string> {
-  const words = script.toLowerCase().replace(/[’']/g, '').match(/[a-z0-9]+/g) || [];
-  const base = words.slice(0, 3).join('_').slice(0, 40);
-  const stem = NAME_RE.test(base) ? base : 'video';
+/** Lower-case words of a text, accents removed: "Café Tips #1!" → ["cafe", "tips", "1"]. */
+function slugWords(text: string): string[] {
+  return text.normalize('NFKD').replace(/[\u0300-\u036f’']/g, '').toLowerCase().match(/[a-z0-9]+/g) || [];
+}
+
+/** The first line of the script, cut to about 60 characters at a word: the title when none is typed. */
+function defaultTitle(script: string): string {
+  const line = script.split('\n')[0];
+  if (line.length <= 60) return line;
+  return line.slice(0, 60).replace(/\s+\S*$/, '') + '…';
+}
+
+/** A free file-safe name for the job's folders, made from the typed title (else the script's first words),
+ *  e.g. "my_first_reel" or "my_first_reel_2". The title itself can be any text. */
+async function autoName(db: Db, title: string, script: string): Promise<string> {
+  const fromTitle = slugWords(title).join('_').slice(0, 40).replace(/_+$/, '');
+  const fromScript = slugWords(script).slice(0, 3).join('_').slice(0, 40);
+  const stem = [fromTitle, fromScript].find((s) => NAME_RE.test(s)) ?? 'video';
   for (let i = 1; ; i++) {
     const name = i === 1 ? stem : `${stem}_${i}`;
     if (!(await nameTaken(db, name))) return name;
@@ -44,14 +58,18 @@ export function toObjectId(id: string): ObjectId | null {
   return ObjectId.isValid(id) && id.length === 24 ? new ObjectId(id) : null;
 }
 
-type CreateResult = { id: string; name: string } | { errors: string[]; field?: string };
+type CreateResult = { id: string; name: string; title: string } | { errors: string[]; field?: string };
 
-// The name is made from the script; the image and voice default to the saved defaults.
+// The title is any text (default: the script's first line); the image and voice default to the saved defaults.
 export async function createJob(db: Db, body: Record<string, unknown>): Promise<CreateResult> {
   const script = String(body.script ?? '').replace(/\r/g, '').split('\n').map((l) => l.trim()).filter(Boolean).join('\n');
   const words = countWords(script);
   if (!words) return { errors: ['Write a script first'], field: 'script' };
   if (words > MAX_WORDS) return { errors: [`Keep the script under ${MAX_WORDS} words (this one has ${words}); a minute of video takes about 40 minutes.`], field: 'script' };
+
+  const typed = String(body.title ?? '').replace(/\s+/g, ' ').trim();
+  const title = typed || defaultTitle(script);
+  if (title.length > MAX_TITLE) return { errors: [`Keep the title under ${MAX_TITLE} characters`], field: 'title' };
 
   const profile = await getProfile(db);
   const photoId = String(body.photoId ?? profile.defaultPhotoId);
@@ -59,18 +77,18 @@ export async function createJob(db: Db, body: Record<string, unknown>): Promise<
   const voiceId = String(body.voiceId ?? profile.defaultVoiceId);
   if (!profile.voices.some((v) => v.id === voiceId)) return { errors: [`Unknown voice "${voiceId}"`], field: 'voiceId' };
 
-  const name = await autoName(db, script);
+  const name = await autoName(db, typed, script);
   const now = new Date();
   const e = estimateVideo(script);
   const doc: Document = {
-    name, status: 'queued', progress: initialProgress(), createdAt: now, queuedAt: now, attempts: 0, mock: MOCK,
+    name, title, status: 'queued', progress: initialProgress(), createdAt: now, queuedAt: now, attempts: 0, mock: MOCK,
     input: { script, photoId, voiceId },
     estimate: { speechSec: e.speechSec, minutes: e.minutes, costUsd: e.costUsd },
   };
 
   try {
     const r = await db.collection('jobs').insertOne(doc);
-    return { id: r.insertedId.toHexString(), name };
+    return { id: r.insertedId.toHexString(), name, title };
   } catch (err) {
     if ((err as { code?: number }).code === 11000) return { errors: ['Another video with the same name was added at the same moment; press Generate again.'] };
     throw err;

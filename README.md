@@ -5,6 +5,23 @@ animated graphics, captions and background music. All AI models run in the cloud
 
 ![Avatar Studio, the web app](docs/avatar-studio.png)
 
+```mermaid
+flowchart LR
+    S[Script] --> D["0 Design<br/>Claude"]
+    V[Voice clip] --> SP["1 Speech<br/>Fish Audio"]
+    P[Photo] --> F["3 Avatar clips<br/>HeyGen"]
+    D -- storyboard --> SP
+    SP --> T["2 Timing<br/>Whisper"]
+    T --> F
+    T --> G["4 Graphics<br/>Chromium"]
+    D -- music brief --> M["5 Music<br/>Lyria"]
+    SP --> A["5 Assembly<br/>ffmpeg"]
+    F --> A
+    G --> A
+    M --> A
+    A --> O[1080×1920 MP4]
+```
+
 | Step | Model | Script |
 |---|---|---|
 | 0 Design | Claude Opus 5.5 (Anthropic API) | `src/reel/write_storyboard.py` |

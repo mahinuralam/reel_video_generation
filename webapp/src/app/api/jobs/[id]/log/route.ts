@@ -6,8 +6,8 @@ import { toObjectId } from '@/lib/jobs';
 
 export const dynamic = 'force-dynamic';
 
-// Lines that are pure noise in the browser (library banners, separator chatter).
-const NOISE = /^(\s*$|TMA benchmarks|\[rank 0\]|Loading checkpoint shards|create LoRA|```|pip install|\.$|.* - INFO - separator - )/;
+// Blank lines are dropped from the short log.
+const NOISE = /^\s*$/;
 
 // GET /api/jobs/:id/log?lines=40&all=1 → { lines }
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {

@@ -5,7 +5,8 @@
 // fresh install.
 //
 // Usage (the worker calls it, with cwd = project root):
-//   node mock_pipeline.mjs <name> <out_dir>   env FFMPEG, MOCK_SPEECH_SEC, MOCK_SEG_MS, MOCK_FAIL_AT, REF_AUDIO
+//   node mock_pipeline.mjs <name> <out_dir>   env FFMPEG, MOCK_SPEECH_SEC, MOCK_SEG_MS, MOCK_FAIL_AT, REF_AUDIO,
+//   MOCK_AVATAR (the avatar model's short name), MOCK_USD_PER_SEC
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -16,6 +17,8 @@ const FFMPEG = process.env.FFMPEG || 'ffmpeg';
 const SEG_MS = Number(process.env.MOCK_SEG_MS || 1500);
 const FAIL_AT = Number(process.env.MOCK_FAIL_AT || 0);
 const EXAMPLE = 'src/reel/example_storyboard.json';
+const AVATAR = process.env.MOCK_AVATAR || 'HeyGen';
+const USD_PER_SEC = Number(process.env.MOCK_USD_PER_SEC || 0.05);
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const out = (s) => process.stdout.write(s + '\n');
@@ -45,14 +48,14 @@ out(`speech: ${sec.toFixed(1)} s in 1 take(s), 0.8 s -> ${relOut('speech.wav')}`
 out('== 2/5 timing');
 await sleep(600);
 out('== 3/5 face');
-for (const b of faces) out(`[face] ${b.id}: ${b.sec.toFixed(2)} s sent to HeyGen (mock-${b.id})`);
+for (const b of faces) out(`[face] ${b.id}: ${b.sec.toFixed(2)} s sent to ${AVATAR} (mock-${b.id})`);
 for (const [i, b] of faces.entries()) {
   await sleep(SEG_MS);
   if (FAIL_AT === i + 1) {
-    err(`Error: HeyGen could not make the clip for beat '${b.id}' (failed): simulated failure, the script contains FAIL_TEST\n`);
+    err(`Error: ${AVATAR} could not make the clip for beat '${b.id}' (failed): simulated failure, the script contains FAIL_TEST\n`);
     process.exit(1);
   }
-  out(`[ok] ${relOut(`build/face/${b.id}.raw.mp4`)} in ${(SEG_MS / 1000).toFixed(0)} s, cost $${(b.sec * 0.05).toFixed(3)}`);
+  out(`[ok] ${relOut(`build/face/${b.id}.raw.mp4`)} in ${(SEG_MS / 1000).toFixed(0)} s, cost $${(b.sec * USD_PER_SEC).toFixed(3)}`);
 }
 out('== 4/5 visuals');
 for (const b of beats) { await sleep(300); out(`${b.id}: ${Math.round(b.sec * 25)} frames in 12 s -> ${relOut(`build/clips/${b.id}.mp4`)}`); }

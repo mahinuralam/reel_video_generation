@@ -3,14 +3,12 @@
 import fs from 'node:fs';
 import { ObjectId, type Db, type Document } from 'mongodb';
 import { abs, MOCK } from './config';
-import { countWords, estimateVideo } from './estimate';
+import { countWords, DEFAULT_AVATAR, estimateVideo, isAvatar, MAX_TITLE, MAX_WORDS } from './estimate';
 import { initialProgress } from './progress';
 import { getProfile } from './profile';
 import type { Job } from './types';
 
 const NAME_RE = /^[a-z0-9][a-z0-9_]{1,47}$/;
-const MAX_WORDS = 600; // ~4 min of speech
-const MAX_TITLE = 100;
 
 /** Files and folders a job writes (project-relative). If any exists the name is taken. */
 function pathsFor(name: string): string[] {
@@ -60,12 +58,13 @@ export function toObjectId(id: string): ObjectId | null {
 
 type CreateResult = { id: string; name: string; title: string } | { errors: string[]; field?: string };
 
-// The title is any text (default: the script's first line); the image and voice default to the saved defaults.
+// The title is any text (default: the script's first line); the image and voice default to the saved
+// defaults, the avatar model to DEFAULT_AVATAR.
 export async function createJob(db: Db, body: Record<string, unknown>): Promise<CreateResult> {
   const script = String(body.script ?? '').replace(/\r/g, '').split('\n').map((l) => l.trim()).filter(Boolean).join('\n');
   const words = countWords(script);
   if (!words) return { errors: ['Write a script first'], field: 'script' };
-  if (words > MAX_WORDS) return { errors: [`Keep the script under ${MAX_WORDS} words (this one has ${words}); a minute of video takes about 40 minutes.`], field: 'script' };
+  if (words > MAX_WORDS) return { errors: [`Keep the script under ${MAX_WORDS} words (this one has ${words}).`], field: 'script' };
 
   const typed = String(body.title ?? '').replace(/\s+/g, ' ').trim();
   const title = typed || defaultTitle(script);
@@ -77,12 +76,15 @@ export async function createJob(db: Db, body: Record<string, unknown>): Promise<
   const voiceId = String(body.voiceId ?? profile.defaultVoiceId);
   if (!profile.voices.some((v) => v.id === voiceId)) return { errors: [`Unknown voice "${voiceId}"`], field: 'voiceId' };
 
+  const avatar = body.avatar ?? DEFAULT_AVATAR;
+  if (!isAvatar(avatar)) return { errors: [`Unknown avatar model "${String(avatar)}"`], field: 'avatar' };
+
   const name = await autoName(db, typed, script);
   const now = new Date();
-  const e = estimateVideo(script);
+  const e = estimateVideo(script, avatar);
   const doc: Document = {
     name, title, status: 'queued', progress: initialProgress(), createdAt: now, queuedAt: now, attempts: 0, mock: MOCK,
-    input: { script, photoId, voiceId },
+    input: { script, photoId, voiceId, avatar },
     estimate: { speechSec: e.speechSec, minutes: e.minutes, costUsd: e.costUsd },
   };
 

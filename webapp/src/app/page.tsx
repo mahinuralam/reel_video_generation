@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from '@/components/Icon';
 import { VideoCard } from '@/components/VideoCard';
 import { api, fileUrl, usePoll } from '@/lib/client';
-import { estimateVideo, fmtDuration, fmtMinutes, fmtUsd } from '@/lib/estimate';
+import { AVATARS, DEFAULT_AVATAR, estimateVideo, fmtDuration, fmtMinutes, fmtUsd, isAvatar, MAX_TITLE, MAX_WORDS, type AvatarEngine } from '@/lib/estimate';
 import type { Job, Profile, ScriptTemplate } from '@/lib/types';
 
 type JobsResp = { jobs: Job[]; queue: { count: number; waitSec: number } };
@@ -22,6 +22,7 @@ export default function Create() {
   const [photoId, setPhotoId] = useState<string | null>(null);
   const [voiceId, setVoiceId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
+  const [avatar, setAvatar] = useState<AvatarEngine>(DEFAULT_AVATAR);
   const [script, setScript] = useState('');
   const [transcript, setTranscript] = useState('');
   const [note, setNote] = useState<{ text: string; bad?: boolean } | null>(null);
@@ -36,7 +37,7 @@ export default function Create() {
 
   const photo = photoId ?? profile?.defaultPhotoId ?? null;
   const voice = voiceId ?? profile?.defaultVoiceId ?? null;
-  const est = useMemo(() => estimateVideo(script), [script]);
+  const est = useMemo(() => estimateVideo(script, avatar), [script, avatar]);
   const canGo = est.words > 0 && !!photo && !!voice && !busy;
 
   function play(id: string, file: string) {
@@ -69,7 +70,7 @@ export default function Create() {
     const body = new FormData();
     body.append('file', file);
     body.append('transcript', transcript);
-    const r = await fetch('/api/voices', { method: 'POST', body });
+    const r = await fetch('/api/profile/voices', { method: 'POST', body });
     const j = await r.json().catch(() => ({}));
     setBusy(null);
     if (!r.ok) { setNote({ text: j.error || 'Upload failed', bad: true }); return; }
@@ -82,7 +83,7 @@ export default function Create() {
     e.preventDefault();
     if (!canGo) return;
     setBusy('submit'); setErrors([]);
-    const r = await api<{ id?: string; errors?: string[] }>('/api/jobs', 'POST', { title, script, photoId: photo, voiceId: voice });
+    const r = await api<{ id?: string; errors?: string[] }>('/api/jobs', 'POST', { title, script, photoId: photo, voiceId: voice, avatar });
     if (r.ok && r.data.id) { router.push(`/jobs/${r.data.id}`); return; }
     setErrors(r.data.errors || ['Could not add the video']);
     setBusy(null);
@@ -102,7 +103,7 @@ export default function Create() {
       <form className="create" onSubmit={submit} noValidate>
         <div className="prompt">
           <label htmlFor="title" className="sr-only">Title</label>
-          <input id="title" className="prompt-title" maxLength={100} value={title} onChange={(e) => setTitle(e.target.value)}
+          <input id="title" className="prompt-title" maxLength={MAX_TITLE} value={title} onChange={(e) => setTitle(e.target.value)}
             placeholder="Title (optional)" />
           <label htmlFor="script" className="sr-only">Script</label>
           <textarea id="script" rows={6} value={script} onChange={(e) => setScript(e.target.value)}
@@ -115,8 +116,12 @@ export default function Create() {
               <option value="">Saved scripts</option>
               {scripts?.scripts.map((s) => <option key={s.id} value={s.id}>{s.label} ({s.words} words)</option>)}
             </select>
+            <select id="avatar" className="pill-select" aria-label="Avatar model" value={avatar}
+              onChange={(e) => { if (isAvatar(e.target.value)) setAvatar(e.target.value); }}>
+              {Object.entries(AVATARS).map(([id, a]) => <option key={id} value={id}>{a.label}</option>)}
+            </select>
             <span className="meta">
-              {est.words ? `${est.words} words · ${fmtDuration(est.speechSec)} of speech · about ${est.minutes} min · about ${fmtUsd(est.costUsd)}` : 'Under 600 words'}
+              {est.words ? `${est.words} words · ${fmtDuration(est.speechSec)} of speech · about ${est.minutes} min · about ${fmtUsd(est.costUsd)}` : `Under ${MAX_WORDS} words`}
               {queue?.count ? ` · ${queue.count} ahead (~${fmtMinutes(queue.waitSec)})` : ''}
             </span>
             <button type="submit" className="btn btn-cta" disabled={!canGo}>
@@ -132,7 +137,6 @@ export default function Create() {
             <div className="tiles">
               {profile?.photos.map((p) => (
                 <button key={p.id} type="button" className="tile" aria-pressed={photo === p.id} onClick={() => setPhotoId(p.id)}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={fileUrl(p.file)} alt="" />
                   <span>{p.label}</span>
                 </button>

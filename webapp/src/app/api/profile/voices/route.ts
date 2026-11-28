@@ -14,7 +14,7 @@ const MIN_SEC = 3;
 const MAX_SEC = 30;   // longer clips are cut to their first CUT_SEC seconds
 const CUT_SEC = 20;
 
-// POST /api/voices  multipart: file (any audio ffmpeg can read), transcript?
+// POST /api/profile/voices  multipart: file (any audio ffmpeg can read), transcript?
 // Saves the clip as a reusable voice: mono 24 kHz wav. Its exact words come from the transcript if
 // given, otherwise Whisper writes them on the first video that uses the voice.  → { profile, voice }
 export async function POST(req: Request) {
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
   if (transcript) fs.writeFileSync(textFile, transcript + '\n');
 
   const sec = (await probe(wav)).durationSec;
-  const voice: Voice = { id, label, file: rel(wav), textFile: rel(textFile), sec: sec ? Math.round(sec * 10) / 10 : null, uploaded: true };
+  const voice: Voice = { id, label, file: rel(wav), textFile: rel(textFile), sec: sec ? Math.round(sec * 10) / 10 : null };
   const db = await getDb();
   const { defaultVoiceId } = await getProfile(db);
   await db.collection<Profile>('profiles').updateOne({ _id: 'default' }, {

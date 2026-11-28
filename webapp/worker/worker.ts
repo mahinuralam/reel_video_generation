@@ -9,7 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { Db, Document, ObjectId } from 'mongodb';
 import { abs, FFMPEG, JOB_LOG_DIR, MOCK, MOCK_DIR, MOCK_SEG_MS, MONGODB_DB, PROJECT_ROOT, rel, TEMPLATE_DIR, WEBAPP_DIR } from '../src/lib/config';
-import { countWords, WORDS_PER_SEC } from '../src/lib/estimate';
+import { AVATARS, countWords, DEFAULT_AVATAR, WORDS_PER_SEC } from '../src/lib/estimate';
 import { probe } from '../src/lib/media';
 import { getClient, getDb } from '../src/lib/mongo';
 import { extractError, initialProgress, ProgressParser } from '../src/lib/progress';
@@ -90,7 +90,8 @@ async function start(job: Document) {
   const log = fs.createWriteStream(logAbs, { flags: 'a' });
   log.write(`\n===== ${new Date().toISOString()} attempt ${job.attempts} (${MOCK ? 'mock pipeline' : 'pipeline'}) =====\n`);
 
-  const env: NodeJS.ProcessEnv = { ...process.env, REF_AUDIO: voice.file, REF_TEXT: voice.textFile, PYTHONUNBUFFERED: '1' };
+  const avatar = inp.avatar || DEFAULT_AVATAR;
+  const env: NodeJS.ProcessEnv = { ...process.env, REF_AUDIO: voice.file, REF_TEXT: voice.textFile, AVATAR_ENGINE: avatar, PYTHONUNBUFFERED: '1' };
   let cmd: string, args: string[], speechRel: string, outputRel: string, storyboardRel: string;
   if (MOCK) {
     const dir = path.join(MOCK_DIR, job.name);
@@ -100,7 +101,8 @@ async function start(job: Document) {
     storyboardRel = rel(path.join(dir, 'storyboard.json'));
     cmd = process.execPath;
     args = [path.join(WEBAPP_DIR, 'worker', 'mock_pipeline.mjs'), job.name, dir];
-    Object.assign(env, { FFMPEG, MOCK_SPEECH_SEC: (countWords(script) / WORDS_PER_SEC).toFixed(2), MOCK_SEG_MS: String(MOCK_SEG_MS), MOCK_FAIL_AT: /FAIL_TEST/.test(script) ? '2' : '' });
+    Object.assign(env, { FFMPEG, MOCK_SPEECH_SEC: (countWords(script) / WORDS_PER_SEC).toFixed(2), MOCK_SEG_MS: String(MOCK_SEG_MS), MOCK_FAIL_AT: /FAIL_TEST/.test(script) ? '2' : '',
+      MOCK_AVATAR: AVATARS[avatar].short, MOCK_USD_PER_SEC: String(AVATARS[avatar].usdPerSec) });
   } else {
     const scriptRel = `inputs/scripts/${job.name}.txt`;
     fs.writeFileSync(abs(scriptRel), script + '\n');
@@ -112,11 +114,11 @@ async function start(job: Document) {
     args = ['src/make_video.sh', job.name, scriptRel, tplRel];
   }
 
-  // detached: the job gets its own process group, so cancel can stop torchrun and its children too
+  // detached: the job gets its own process group, so cancel stops the pipeline and all its children
   const child = spawn(cmd, args, { cwd: PROJECT_ROOT, env, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
   say(`started ${job.name} (pid ${child.pid}): ${cmd === process.execPath ? 'node' : cmd} ${args.join(' ')}`);
   const run: Running = {
-    id: job._id, name: job.name, child, parser: new ProgressParser(), log, tail: [], partial: '',
+    id: job._id, name: job.name, child, parser: new ProgressParser(AVATARS[avatar].clipSec, AVATARS[avatar].parallel), log, tail: [], partial: '',
     dirty: true, lastFlush: 0, speechRel, outputRel, storyboardRel, speechSeen: false, beatsSaved: false,
     termSentAt: null, stopReason: null, finished: false,
   };

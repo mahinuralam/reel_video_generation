@@ -22,23 +22,28 @@ import os
 import re
 import sys
 
+from api import need_key, norm
+
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-EXAMPLE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "example_storyboard.json")
+HERE = os.path.dirname(os.path.abspath(__file__))
+EXAMPLE = os.path.join(HERE, "example_storyboard.json")
 DEFAULT_MODEL = "claude-opus-5-5"
 
-# Must match src/reel/stage/icons.js and scenes.js.
-ICONS = ["chat", "bulb", "pencil", "sparkles", "cap", "mail", "doc", "target", "globe", "code",
-         "alert", "check", "shield", "star", "clock", "rocket"]
-SCENE_MAX = {"checklist": 5, "grid": 6, "chat": 4, "callout": 3}
-WORDS_PER_SECOND = 2.3  # the cloned voice speaks about 2.3 words per second, pauses included
+# How Claude writes each on-camera beat's "gesture" (the rule text and the length limit).
+with open(os.path.join(HERE, "avatar_rules.json"), encoding="utf-8") as f:
+    GESTURES = json.load(f)["gesture"]
+
+# The icon names the stage can draw: one `name: "path"` entry per line of stage/icons.js.
+with open(os.path.join(HERE, "stage", "icons.js"), encoding="utf-8") as f:
+    ICONS = re.findall(r'^\s+(\w+): "', f.read(), re.M)
+assert ICONS, "no icons found in stage/icons.js"
+SCENE_MAX = {"checklist": 5, "grid": 6, "chat": 4, "callout": 3}  # must match src/reel/stage/scenes.js
+# the cloned voice speaks about 2.7 words per second, pauses included; must match WORDS_PER_SEC in
+# webapp/src/lib/estimate.ts
+WORDS_PER_SECOND = 2.7
 
 
 # ---------------------------------------------------------------- validation
-
-def norm(text: str) -> str:
-    """Same as norm() in src/reel/timing.py: letters and digits only, lower case."""
-    return re.sub(r"[^a-z0-9]+", "", text.lower().replace("’", "'"))
-
 
 def cue_problem(cue, lines, where):
     if not isinstance(cue, str) or not cue.strip():
@@ -94,6 +99,9 @@ def validate(sb) -> list[str]:
             continue
         if any("\n" in l for l in lines):
             out.append(f"{at}: a line must not contain a line break (use separate lines)")
+        limit = GESTURES["max_chars"]
+        if "gesture" in b and not (b.get("type") in ("face", "split") and text(b["gesture"]) and len(b["gesture"]) <= limit):
+            out.append(f'{at}: "gesture" is a short direction (at most {limit} characters) for face and split beats only')
 
         def check(cue, where, optional=False):
             if optional and cue in (None, ""):
@@ -205,6 +213,8 @@ catchy synth or bass), not calm background music. It sits under the voice and ri
 Each beat: "id" (lower-case letters, digits, _; unique), "type" ("face", "split" or "visual"),
 "lines" (list of strings: the exact words spoken during the beat, in order).
 
+GESTURE_RULE
+
 face beat: the avatar speaks on camera. Optional "overlay":
   {"kind": "lower_third", "title": "...", "subtitle": "...", "cue": "word"}   (cue optional)
   {"kind": "keywords", "items": [{"label": "...", "cue": "word"}, ...]}       (1-4 pills)
@@ -230,13 +240,13 @@ distinctive content word, not "the" or "a".
 
 Writing the lines:
 - Spoken, first person, natural and warm; this is the user talking to their audience.
-- About TARGET_WORDS words in total (TARGET_SECONDS seconds at 2.3 words per second).
+- About TARGET_WORDS words in total (TARGET_SECONDS seconds at WORDS_PER_SECOND words per second).
 - Open with a strong hook in the first sentence: a face beat, usually with a lower_third naming
   the topic. End with a face beat (a short wrap-up or call to action, often a keywords overlay).
 - In between, mix all three layouts and keep the avatar coming back: mostly split beats, with a
   full visual beat now and then for variety. Never put two face beats or more than two visual
   beats in a row. Keep beats short (1-2 sentences) so the picture changes every few seconds.
-- The avatar costs $0.05 per second on screen (face and split beats), so face + split beats together
+- The avatar is paid for per second on screen (face and split beats), so face + split beats together
   should be at most about 70% of the words.
 - One visual beat = one idea, 1-3 sentences. Labels on screen should be short (2-5 words) and
   echo what is being said.
@@ -247,8 +257,10 @@ Writing the lines:
 
 def build_prompt(args, example: str) -> tuple[str, str]:
     target_words = round(args.seconds * WORDS_PER_SECOND)
-    system = (RULES.replace("ICONS", ", ".join(ICONS))
-              .replace("TARGET_WORDS", str(target_words)).replace("TARGET_SECONDS", str(args.seconds)))
+    gesture_rule = " ".join(GESTURES["rule"]).replace("MAX_CHARS", str(GESTURES["max_chars"]))
+    system = (RULES.replace("ICONS", ", ".join(ICONS)).replace("GESTURE_RULE", gesture_rule)
+              .replace("TARGET_WORDS", str(target_words)).replace("TARGET_SECONDS", str(args.seconds))
+              .replace("WORDS_PER_SECOND", str(WORDS_PER_SECOND)))
     system += "\n\nA finished storyboard that rendered well (follow its style and structure):\n" + example
     if args.script:
         with open(args.script, encoding="utf-8") as f:
@@ -267,19 +279,6 @@ def build_prompt(args, example: str) -> tuple[str, str]:
 
 
 # ---------------------------------------------------------------- Claude
-
-def load_key() -> None:
-    """Put ANTHROPIC_API_KEY from the project's .env into the environment, where the SDK reads it."""
-    env_path = os.path.join(ROOT, ".env")
-    if not os.environ.get("ANTHROPIC_API_KEY") and os.path.exists(env_path):
-        with open(env_path, encoding="utf-8") as f:
-            for line in f:
-                k, sep, v = line.strip().partition("=")
-                if sep and k.strip() == "ANTHROPIC_API_KEY" and v.strip():
-                    os.environ["ANTHROPIC_API_KEY"] = v.strip().strip('"').strip("'")
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        sys.exit(f"ANTHROPIC_API_KEY is empty: put it in {env_path} (ANTHROPIC_API_KEY=sk-ant-...)")
-
 
 def call(client, model: str, system: str, messages: list[dict]):
     """One draft. Streams (long outputs), falls back to another model if this one declines."""
@@ -371,8 +370,7 @@ def main() -> None:
 
     import anthropic
 
-    load_key()
-    client = anthropic.Anthropic()
+    client = anthropic.Anthropic(api_key=need_key("ANTHROPIC_API_KEY"))
     messages = [{"role": "user", "content": task}]
     for attempt in range(1, args.attempts + 1):
         print(f"draft {attempt}/{args.attempts} with {args.model} ...", flush=True)

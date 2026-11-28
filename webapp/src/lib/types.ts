@@ -1,4 +1,5 @@
 // Shared shapes for jobs and the saved images and voices (used by the UI, the API and the worker).
+import type { AvatarEngine } from './estimate';
 
 export type JobStatus = 'queued' | 'running' | 'done' | 'failed' | 'canceled';
 
@@ -7,23 +8,24 @@ export interface Beat {
   id: string;
   type: 'face' | 'split' | 'visual';
   lines: string[];
+  gesture?: string;                                 // face and split beats: Claude's direction for hands and body
   scene?: string;                                   // visual and split beats: checklist | grid | chat | callout
   data?: { title?: string };
   overlay?: { kind: string; title?: string };       // face beats: lower_third | keywords
 }
 
 // What a video is made from; beats are filled in once Claude has designed it.
-export interface JobInput { script: string; photoId: string; voiceId: string; beats?: Beat[] }
+export interface JobInput { script: string; photoId: string; voiceId: string; avatar?: AvatarEngine; beats?: Beat[] }
 
 export interface Progress {
   stage: string;        // queued | design | speech | timing | face | visuals | assemble | done
   pct: number;          // 0..100
-  detail: string;       // one human line, e.g. "Avatar clips from HeyGen: 1 of 2 ready"
-  faceDone: number;     // avatar clips back from HeyGen
+  detail: string;       // one human line, e.g. "Avatar clips: 1 of 2 ready"
+  faceDone: number;     // avatar clips back from the avatar model
   faceTotal: number;    // on-camera beats in Claude's design
   visualsDone: number;
   beatsTotal: number;
-  costUsd: number;      // what HeyGen and the music charged so far
+  costUsd: number;      // what the avatar clips and the music cost so far
   etaSec?: number | null;
 }
 
@@ -56,7 +58,7 @@ export interface Job {
   finishedAt?: string | null;
 }
 
-export interface Photo { id: string; label: string; file: string; prompt: string; source?: string; uploaded?: boolean }
+export interface Photo { id: string; label: string; file: string; prompt: string }
 
 /** A voice to clone: a short clip of someone speaking plus (once known) its exact words. */
 export interface Voice {
@@ -66,7 +68,6 @@ export interface Voice {
   textFile: string;     // project-relative txt with the clip's words; Whisper writes it on first use if missing
   text?: string;        // filled in by the API from textFile when it exists
   sec: number | null;
-  uploaded?: boolean;
 }
 
 export interface Profile {

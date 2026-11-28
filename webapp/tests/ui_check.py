@@ -88,6 +88,8 @@ with sync_playwright() as p:
     page.get_by_role("textbox", name="Title").fill(f"UI Check {STAMP}: My first reel!")
     page.get_by_role("textbox", name="Script", exact=True).fill(f"UI check {STAMP}. Welcome to this week's update.\nI'll walk you through what we tried and what we plan to do next.")
     check("words" in page.locator(".meta").inner_text(), "estimate shows under the script")
+    engines = json.load(open("src/reel/avatar_engines.json", encoding="utf-8"))
+    check(page.locator("#avatar option").count() == len(engines), "every avatar model can be picked")
     page.locator("input[type=file][accept^=image]").set_input_files(PHOTO)
     page.get_by_text("saved and selected").wait_for(timeout=15000)
     check(page.locator(".tile[aria-pressed=true]", has_text=f"ui_photo_{STAMP}").count() == 1, "an uploaded image is saved and selected")

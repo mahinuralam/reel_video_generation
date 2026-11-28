@@ -5,6 +5,10 @@
 env/
 .cache/
 
+# Optional local LongCat: its repo and weights
+third_party/
+weights/
+
 # Your inputs and everything the pipeline makes
 inputs/
 reels/

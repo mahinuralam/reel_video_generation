@@ -9,7 +9,8 @@
     "start": "next start -H 127.0.0.1 -p 3100",
     "worker": "tsx worker/worker.ts",
     "typecheck": "tsc --noEmit",
-    "test:e2e": "node tests/e2e.mjs"
+    "test:e2e": "node tests/e2e.mjs",
+    "test:progress": "tsx tests/progress_check.ts"
   },
   "dependencies": {
     "mongodb": "7.9.1",

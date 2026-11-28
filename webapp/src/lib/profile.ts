@@ -1,13 +1,14 @@
-// The saved inputs every video can reuse: images (each with the prompt HeyGen gets) and voices (a clip
+// The saved inputs every video can reuse: images (each with the prompt the avatar model gets) and voices (a clip
 // to clone plus its words), all added from the app, and the scripts used before.
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Db } from 'mongodb';
 import { abs } from './config';
+import { countWords } from './estimate';
 import type { Profile, ScriptTemplate, Voice } from './types';
 
-/** Prompt for uploaded images. HeyGen gets it along with the photo. */
-export const GENERIC_PROMPT = 'A person looks straight at the camera and talks in a calm, friendly way. Natural blinking, small head movements, steady framing, sharp realistic detail.';
+/** Prompt for uploaded images. The avatar model gets it along with the photo. */
+export const GENERIC_PROMPT = 'A person looks straight at the camera and talks in a warm, lively way, with natural hand gestures that match the words. Natural blinking and head movement, sharp realistic detail.';
 
 /** The clip's words, if they are known yet (an uploaded clip gets them on its first video). */
 function withText(v: Voice): Voice {
@@ -34,7 +35,7 @@ export function scriptTemplates(limit = 24): ScriptTemplate[] {
     .map(({ f }) => {
       const text = fs.readFileSync(path.join(dir, f), 'utf8').trim();
       const id = f.replace(/\.txt$/, '');
-      return { id, label: id.replace(/_/g, ' '), text, words: (text.match(/\S+/g) || []).length };
+      return { id, label: id.replace(/_/g, ' '), text, words: countWords(text) };
     })
     .filter((s) => s.words > 0);
 }

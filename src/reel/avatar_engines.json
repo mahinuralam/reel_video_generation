@@ -1,0 +1,57 @@
+{
+    "heygen": {
+        "label": "HeyGen Avatar 6 Turbo",
+        "short": "HeyGen",
+        "provider": "openrouter",
+        "model": "heygen/heygen-avatar-6-turbo",
+        "usd_per_sec": 0.05,
+        "resolution": "1080p",
+        "key": "OPENROUTER_API_KEY",
+        "clip_sec": 90,
+        "parallel": true
+    },
+    "infinitetalk": {
+        "label": "InfiniteTalk",
+        "short": "InfiniteTalk",
+        "provider": "wavespeed",
+        "model": "wavespeed-ai/infinitetalk",
+        "usd_per_sec": 0.03,
+        "resolution": "480p",
+        "key": "WAVESPEED_API_KEY",
+        "clip_sec": 240,
+        "parallel": true
+    },
+    "longcat": {
+        "label": "LongCat Avatar 1.6",
+        "short": "LongCat",
+        "provider": "wavespeed",
+        "model": "wavespeed-ai/longcat-avatar-1.6",
+        "usd_per_sec": 0.04,
+        "resolution": "480p",
+        "key": "WAVESPEED_API_KEY",
+        "clip_sec": 240,
+        "parallel": true
+    },
+    "longcat-local": {
+        "label": "LongCat Avatar 1.6 (local GPU)",
+        "short": "LongCat local",
+        "provider": "local",
+        "model": "avatar-v1.6",
+        "usd_per_sec": 0,
+        "resolution": "720p",
+        "key": null,
+        "clip_sec": 900,
+        "parallel": false
+    },
+    "omnihuman": {
+        "label": "OmniHuman 2.0",
+        "short": "OmniHuman",
+        "provider": "fal",
+        "model": "bytedance/omnihuman/v2",
+        "usd_per_sec": 0.105,
+        "resolution": "720p",
+        "key": "FAL_KEY",
+        "clip_sec": 180,
+        "parallel": true
+    }
+}

@@ -35,5 +35,5 @@ window.A = (() => {
 
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
-  return { clamp01, outCubic, outBack, prog, appear, pop, el, esc };
+  return { outCubic, prog, appear, pop, el, esc };
 })();

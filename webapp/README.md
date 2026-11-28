@@ -4,6 +4,9 @@ Web app for the video pipeline: choose an image and a voice, type a script, pres
 the progress and download the video. It uses Next.js and MongoDB, plus a worker that runs
 `src/make_video.sh` one job at a time.
 
+The avatar model menu and the cost estimates come from `src/reel/avatar_engines.json`, the list the
+pipeline uses; `next.config.ts` lets the app import it from outside `webapp/`.
+
 ![Avatar Studio](../docs/avatar-studio.png)
 
 ## Setup
@@ -44,17 +47,18 @@ After changing code, run `npm run build` and restart the web app and worker.
 
 ## Mock mode
 
-Set `MOCK=1` in `webapp/.env.local` (then restart) to try the app without API calls. It uses a separate
-database and writes only to `webapp/data/mock/`. A script containing `FAIL_TEST` simulates a failure.
+Set `MOCK=1` in `webapp/.env.local` (then restart) to try the app without API calls. It uses the
+`avatar_studio_mock` database and writes its videos to `webapp/data/mock/`. Uploaded images and voices
+go to `webapp/data/uploads/` in both modes. A script containing `FAIL_TEST` simulates a failure.
 
 ## Tests
 
-Run these in mock mode:
+Run these from the project root, in mock mode:
 
 ```bash
-node webapp/tests/e2e.mjs                       # API + worker
+(cd webapp && npm run test:e2e)                 # API + worker
+(cd webapp && npm run test:progress)            # progress parser (any mode)
 env/reel/bin/python webapp/tests/ui_check.py    # browser
-(cd webapp && npx tsx tests/progress_check.ts)  # progress parser (any mode)
 ```
 
 ## Troubleshooting

@@ -96,11 +96,11 @@
   function render(tG) {
     const t = tG - beat.start;
     if (isFace) {
-      if (updateOverlay) updateOverlay(t, tG);
+      if (updateOverlay) updateOverlay(t);
     } else {
       drawBackground(tG);
       progressFill.style.width = `${(100 * Math.min(1, tG / (TL.total_frames / TL.fps))).toFixed(2)}%`;
-      updateScene(t, tG);
+      updateScene(t);
     }
     drawCaptions(tG);
   }

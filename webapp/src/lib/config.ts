@@ -1,7 +1,8 @@
 // Server-side settings. Everything lives under the avatar_pipeline project folder.
+import fs from 'node:fs';
 import path from 'node:path';
 
-// turbopackIgnore: these are runtime paths into the project (outputs, weights…), not files to bundle
+// turbopackIgnore: these are runtime paths into the project (outputs, uploads, logs), not files to bundle
 export const PROJECT_ROOT = path.resolve(/*turbopackIgnore: true*/ process.env.PROJECT_ROOT || path.join(/*turbopackIgnore: true*/ process.cwd(), '..'));
 export const WEBAPP_DIR = path.join(PROJECT_ROOT, 'webapp');
 export const DATA_DIR = path.join(WEBAPP_DIR, 'data');
@@ -15,8 +16,10 @@ export const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017
 // Mock runs get their own database so simulated jobs never mix with real ones.
 export const MONGODB_DB = process.env.MONGODB_DB || (MOCK ? 'avatar_studio_mock' : 'avatar_studio');
 
-export const FFMPEG = path.join(PROJECT_ROOT, 'env', 'reel', 'bin', 'ffmpeg');
-export const FFPROBE = path.join(PROJECT_ROOT, 'env', 'reel', 'bin', 'ffprobe');
+// ffmpeg and ffprobe from env/reel, else from PATH
+const tool = (name: string) => { const p = path.join(PROJECT_ROOT, 'env', 'reel', 'bin', name); return fs.existsSync(p) ? p : name; };
+export const FFMPEG = tool('ffmpeg');
+export const FFPROBE = tool('ffprobe');
 export const MOCK_SEG_MS = Number(process.env.MOCK_SEG_MS || 1500);
 
 /** Project-relative path → absolute path. */

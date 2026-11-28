@@ -5,7 +5,7 @@ import { MIME, resolveSafe } from '@/lib/files';
 
 export const dynamic = 'force-dynamic';
 
-// GET /api/files/outputs/video/x_480p/x.mp4[?download=1]
+// GET /api/files/outputs/reels/<name>/<name>.mp4[?download=1]
 // Streams videos, audio and images only. Supports Range so the browser can seek in videos.
 export async function GET(req: Request, { params }: { params: Promise<{ path: string[] }> }) {
   const parts = (await params).path.map((p) => decodeURIComponent(p));

@@ -1,5 +1,5 @@
 // Feeds recorded pipeline lines to the progress parser and checks what it reports.
-// Usage: npx tsx tests/progress_check.ts     (no database, no network)
+// Usage: npm run test:progress     (no database, no network)
 import { extractError, ProgressParser } from '../src/lib/progress';
 
 let fails = 0;

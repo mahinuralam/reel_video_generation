@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // End-to-end check of the API and the worker, meant for MOCK=1 (each run takes ~1-2 minutes).
-// It makes its own test image and voice with ffmpeg; its videos and uploads live in the mock
-// database only.   Usage: npm run test:e2e
+// It makes its own test image and voice with ffmpeg. Its jobs go to the avatar_studio_mock database and
+// webapp/data/mock/; its uploads go to webapp/data/uploads/, as in real mode.   Usage: npm run test:e2e
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -65,14 +65,14 @@ const photoId = r.data.photo?.id;
 r = await upload('/api/profile/photos', { file: new File(['not an image'], 'x.txt', { type: 'text/plain' }) });
 check(r.status === 422, 'a non-image is refused');
 const wav = fixture('voice.wav', '-f', 'lavfi', '-i', 'sine=frequency=180:duration=6', '-ac', '1', '-ar', '24000');
-r = await upload('/api/voices', { file: new File([wav], `e2e_${stamp}.wav`, { type: 'audio/wav' }), transcript: 'Hello there, this is a test.' });
+r = await upload('/api/profile/voices', { file: new File([wav], `e2e_${stamp}.wav`, { type: 'audio/wav' }), transcript: 'Hello there, this is a test.' });
 const words = (res) => res.data.profile?.voices.find((v) => v.id === res.data.voice?.id)?.text;
 check(r.status === 201 && words(r) === 'Hello there, this is a test.' && !r.data.cut, 'a voice upload is saved with the typed words');
 const voiceId = r.data.voice?.id;
 const voiceFile = r.data.voice?.file;
-r = await upload('/api/voices', { file: new File([wav.subarray(0, 44 + 24000 * 2)], 'short.wav', { type: 'audio/wav' }) });
+r = await upload('/api/profile/voices', { file: new File([wav.subarray(0, 44 + 24000 * 2)], 'short.wav', { type: 'audio/wav' }) });
 check(r.status === 422 && /at least 3 s/.test(r.data.error), `a clip under 3 s is refused (${r.data.error})`);
-r = await upload('/api/voices', { file: new File([wav], `e2e_nowords_${stamp}.wav`, { type: 'audio/wav' }) });
+r = await upload('/api/profile/voices', { file: new File([wav], `e2e_nowords_${stamp}.wav`, { type: 'audio/wav' }) });
 check(r.status === 201 && words(r) === '', 'a voice without words is saved; Whisper writes them on first use');
 
 console.log('\n3. input validation');
@@ -104,7 +104,8 @@ check(sawDesign, 'progress showed the design step');
 check(sawSpeechEarly, 'speech is available while the video is still rendering');
 check(done.input.beats?.length === 6 && done.progress.faceTotal === 4, `Claude's design is stored with the video (${done.input.beats?.length} beats, ${done.progress.faceTotal} on camera)`);
 check(lastFaceSeen >= 1 && done.progress.faceDone === 4, `every avatar clip was tracked (${done.progress.faceDone})`);
-check(done.progress.costUsd > 0.04, `the HeyGen and music costs are recorded ($${done.progress.costUsd})`);
+check(done.input.beats?.filter((b) => b.gesture).length === 4, 'every on-camera beat has a gesture');
+check(done.progress.costUsd > 0.04, `the avatar and music costs are recorded ($${done.progress.costUsd})`);
 check(done.output?.video && done.output.durationSec > 0, `output recorded with duration (${done.output?.durationSec?.toFixed(1)} s)`);
 check(done.input.photoId === photoId && done.input.voiceId === voiceId, 'the chosen image and voice are stored');
 const lg = await call(`/api/jobs/${vid}/log?lines=40`);
@@ -124,6 +125,12 @@ check(r.status === 201 && r.data.title === `Café Tips #1: ${stamp} ✨` && r.da
 await call(`/api/jobs/${r.data.id}/cancel`, 'POST');
 r = await call('/api/jobs', 'POST', { script, title: 'x'.repeat(101) });
 check(r.status === 422 && r.data.field === 'title', 'a title over 100 characters is refused');
+r = await call('/api/jobs', 'POST', { script, avatar: 'nope' });
+check(r.status === 422 && r.data.field === 'avatar', 'an unknown avatar model is refused');
+r = await call('/api/jobs', 'POST', { script, avatar: 'longcat' });
+const lc = (await call(`/api/jobs/${r.data.id}`)).data.job;
+await call(`/api/jobs/${r.data.id}/cancel`, 'POST');
+check(lc?.input.avatar === 'longcat' && lc.estimate.costUsd < done.estimate.costUsd, `the avatar model is stored and priced ($${lc?.estimate.costUsd} vs $${done.estimate.costUsd})`);
 
 console.log('\n5. failure, retry and remove');
 r = await call('/api/jobs', 'POST', { script: 'This one will FAIL_TEST on purpose during the second segment of the video please.' });

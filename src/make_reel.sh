@@ -5,6 +5,7 @@
 #   REF_AUDIO  10-20 s of clear speech in the voice to clone (wav)
 #   REF_TEXT   its exact words; if the file is missing or empty, Whisper writes it first
 #   FORCE_FACE=1 makes the avatar clips again even if they exist
+#   AVATAR_ENGINE heygen (default) or another id from src/reel/avatar_engines.json; see src/reel/render_face.py
 #
 # A storyboard is a list of beats. Each beat has the lines spoken during it and is either
 #   "face"   - the avatar speaks on camera (optional overlay: lower_third, keywords),
@@ -15,11 +16,12 @@
 # Steps (each is skipped or cheap when its result already exists):
 #   1. speech   the cloned voice for all lines (Fish Audio, checked with Whisper)
 #   2. timing   beat boundaries, word times, captions, cue times (Whisper)
-#   3. face     avatar clips for the face and split beats (HeyGen Avatar 6 Turbo, in parallel)
+#   3. face     avatar clips for the face and split beats, with the beat's gesture (AVATAR_ENGINE)
 #   4. visuals  every beat drawn as a 1080x1920 clip with captions
 #   5. assemble background music (Lyria 3, from the storyboard's "music" brief), then
 #               clips + speech + sound effects + music -> outputs/reels/<name>/<name>.mp4
-# The models run on OpenRouter (OPENROUTER_API_KEY in .env).
+# The models run on OpenRouter (OPENROUTER_API_KEY in .env); the other avatar models on WaveSpeed
+# (WAVESPEED_API_KEY), fal.ai (FAL_KEY) or this machine's GPU (longcat-local).
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/setup/common.sh"
 cd "$ROOT"
@@ -44,8 +46,9 @@ if not os.path.exists(sys.argv[2]) or open(sys.argv[2], encoding="utf-8").read()
         f.write(text)
 EOF
 if [[ ! -f "$BUILD/speech.wav" || "$BUILD/script.txt" -nt "$BUILD/speech.wav" ]]; then
-  bash src/voice/ensure_ref_text.sh "$REF_AUDIO" "$REF_TEXT" "$LOG"
-  "$PY" src/voice/clone_voice.py --ref-audio "$REF_AUDIO" --ref-text "$REF_TEXT" \
+  [[ -s "$REF_TEXT" ]] || "$PY" src/reel/transcribe.py --audio "$REF_AUDIO" --out "${REF_TEXT%.txt}.words.json" \
+      --text-out "$REF_TEXT" 2>> "$LOG/transcribe.stderr.log" | tee "$LOG/transcribe.log"
+  "$PY" src/reel/clone_voice.py --ref-audio "$REF_AUDIO" --ref-text "$REF_TEXT" \
       --script "$BUILD/script.txt" --out "$BUILD/speech.wav" 2> "$LOG/voice.stderr.log" | tee "$LOG/voice.log"
 else
   echo "reusing $BUILD/speech.wav"
@@ -58,7 +61,7 @@ echo "== 2/5 timing"
 echo "== 3/5 face"
 FACE_ARGS=()
 [[ "${FORCE_FACE:-0}" == "1" ]] && FACE_ARGS=(--force)
-"$PY" src/reel/render_face.py --timeline "$BUILD/timeline.json" "${FACE_ARGS[@]}" 2>&1 | tee "$LOG/face.log"
+"$PY" src/reel/render_face.py --timeline "$BUILD/timeline.json" --log-dir "$LOG" "${FACE_ARGS[@]}" 2>&1 | tee "$LOG/face.log"
 
 echo "== 4/5 visuals"
 "$PY" src/reel/render_visuals.py --timeline "$BUILD/timeline.json" 2>&1 | tee "$LOG/visuals.log"

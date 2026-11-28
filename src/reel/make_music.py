@@ -4,7 +4,7 @@ the storyboard's "music" brief (written by Claude), saved as outputs/reels/<name
 assemble.py loops it under the speech. $0.04 per clip; an existing music.mp3 is reused. A storyboard
 without a "music" brief gets no music.
 
-Needs OPENROUTER_API_KEY in the environment (src/setup/common.sh loads the project's .env).
+Needs OPENROUTER_API_KEY, from the environment or the project's .env.
 Standard library only:
     python src/reel/make_music.py --timeline outputs/reels/<name>/build/timeline.json
 """
@@ -15,6 +15,8 @@ import os
 import sys
 import urllib.error
 import urllib.request
+
+from api import need_key
 
 MODEL = "google/lyria-3-clip-preview"
 TRIES = 3  # Lyria now and then ends a stream without audio; the next request usually works
@@ -65,9 +67,7 @@ def main() -> None:
     if os.path.exists(out) and not args.force:
         print(f"[music] reusing {out}")
         return
-    key = os.environ.get("OPENROUTER_API_KEY", "").strip()
-    if not key:
-        sys.exit("Error: OPENROUTER_API_KEY is not set; put it in the project's .env")
+    key = need_key("OPENROUTER_API_KEY")
 
     total = 0.0
     for attempt in range(1, TRIES + 1):

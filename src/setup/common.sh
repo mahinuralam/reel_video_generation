@@ -4,7 +4,7 @@
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 export ROOT
 
-# API keys for the cloud models (ANTHROPIC_API_KEY, OPENROUTER_API_KEY); see .env.example.
+# API keys for the cloud models (ANTHROPIC_API_KEY, OPENROUTER_API_KEY, WAVESPEED_API_KEY, FAL_KEY); see .env.example.
 if [[ -f "$ROOT/.env" ]]; then set -a; source "$ROOT/.env"; set +a; fi
 
 # The one Python environment (src/setup/setup.sh builds it); it also provides ffmpeg and ffprobe.

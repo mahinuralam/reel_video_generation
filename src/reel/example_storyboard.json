@@ -13,6 +13,7 @@
                 "Hello everyone!",
                 "Today, I’m going to introduce you to ChatGPT, an AI-powered conversational tool developed by OpenAI."
             ],
+            "gesture": "Waves on 'Hello', then gestures toward the camera with an open palm on 'introduce'.",
             "overlay": {
                 "kind": "lower_third",
                 "title": "Intro to ChatGPT",
@@ -27,6 +28,7 @@
             "lines": [
                 "Have you ever wished you had a personal assistant who could answer your questions, explain difficult topics, help you write, or generate creative ideas? ChatGPT can help you do all of these things."
             ],
+            "gesture": "Counts on fingers through 'answer', 'explain' and 'write', then opens both hands on 'creative'.",
             "data": {
                 "kicker": "Imagine",
                 "title": "A personal assistant that can…",
@@ -109,6 +111,7 @@
             "lines": [
                 "One of its most interesting features is that you can communicate with it using natural language, just like having a conversation with another person."
             ],
+            "gesture": "Moves one hand back and forth between self and camera on 'conversation'.",
             "data": {
                 "kicker": "How it works",
                 "title": "Just talk to it",
@@ -165,6 +168,7 @@
                 "Overall, ChatGPT is a powerful tool that can make learning, working, and creating easier and more efficient.",
                 "Thank you!"
             ],
+            "gesture": "Spreads both hands outward on 'easier', then a small nod and a smile on 'Thank you'.",
             "overlay": {
                 "kind": "keywords",
                 "items": [

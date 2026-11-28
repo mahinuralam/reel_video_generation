@@ -188,7 +188,7 @@
     const o = beat.overlay;
     const row = el("div", "keywords");
     const pills = o.items.map((it, i) => {
-      const pill = el("div", `pill tone${[0, 1, 2, 3][i % 4]}`, esc(it.label));
+      const pill = el("div", `pill tone${i % 4}`, esc(it.label));
       row.append(pill);
       return { pill, at: it.at };
     });

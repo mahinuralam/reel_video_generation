@@ -10,11 +10,8 @@
   --blue: #7c9cff;
   --teal: #5eead4;
   --violet: #a78bfa;
-  --pink: #f472b6;
   --amber: #fbbf24;
-  --red: #f87171;
   --green: #4ade80;
-  --ink: #070b18;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }

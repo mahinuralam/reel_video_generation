@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     fs.rmSync(original, { force: true });
     return NextResponse.json({ error: `Could not read that image: ${(e as Error).message.slice(0, 120)}` }, { status: 422 });
   }
-  const photo: Photo = { id, label, file: rel(portrait), prompt: GENERIC_PROMPT, uploaded: true };
+  const photo: Photo = { id, label, file: rel(portrait), prompt: GENERIC_PROMPT };
   const db = await getDb();
   const { defaultPhotoId } = await getProfile(db);
   await db.collection<Profile>('profiles').updateOne({ _id: 'default' }, {

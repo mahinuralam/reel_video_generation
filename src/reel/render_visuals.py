@@ -134,7 +134,6 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--timeline", required=True)
     ap.add_argument("--beats", nargs="*", help="beat ids to render (default: all)")
-    ap.add_argument("--only", choices=["visual", "face", "split"], help="render only beats of this type")
     ap.add_argument("--jobs", type=int, default=4)
     ap.add_argument("--still", type=float, help="render a single frame at this time (seconds)")
     ap.add_argument("--out", help="output PNG for --still")
@@ -146,8 +145,7 @@ def main() -> None:
 
     with open(args.timeline, encoding="utf-8") as f:
         tl = json.load(f)
-    ids = [b["id"] for b in tl["beats"]
-           if (not args.beats or b["id"] in args.beats) and (not args.only or b["type"] == args.only)]
+    ids = [b["id"] for b in tl["beats"] if not args.beats or b["id"] in args.beats]
     with ProcessPoolExecutor(max_workers=min(args.jobs, max(1, len(ids)))) as pool:
         for line in pool.map(render_beat, [args.timeline] * len(ids), ids):
             print(line, flush=True)

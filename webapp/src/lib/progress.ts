@@ -15,7 +15,6 @@ const RE = {
 };
 
 const STAGES = ['design', 'speech', 'timing', 'face', 'visuals', 'assemble'];
-const CLIP_SEC = 90; // HeyGen renders the avatar clips in parallel; one took about a minute and a half
 
 export function initialProgress(): Progress {
   return { stage: 'queued', pct: 0, detail: 'Waiting to start', faceDone: 0, faceTotal: 0, visualsDone: 0, beatsTotal: 0, costUsd: 0, etaSec: null };
@@ -23,6 +22,8 @@ export function initialProgress(): Progress {
 
 export class ProgressParser {
   p: Progress = initialProgress();
+  /** Typical seconds per avatar clip, and whether the engine renders the clips at the same time. */
+  constructor(private clipSec = 90, private parallel = true) {}
   speechSec: number | null = null;
   outputPath: string | null = null;
   /** True once Claude's storyboard exists, so the worker can show it. */
@@ -34,7 +35,7 @@ export class ProgressParser {
     if (!line) return false;
     const p = this.p;
     let m: RegExpMatchArray | null;
-    // HeyGen clips and the music print what they cost
+    // avatar clips and the music print what they cost
     const cost = line.match(RE.cost);
     if (cost) p.costUsd = Math.round((p.costUsd + parseFloat(cost[1])) * 1000) / 1000;
 
@@ -72,8 +73,8 @@ export class ProgressParser {
       case 'timing': p.pct = 6; p.detail = 'Timing words, captions and cues'; break;
       case 'face':
         p.pct = Math.round(10 + 65 * (p.faceTotal ? p.faceDone / p.faceTotal : 1));
-        p.detail = `Avatar clips from HeyGen: ${p.faceDone} of ${p.faceTotal} ready`;
-        p.etaSec = (p.faceDone < p.faceTotal ? CLIP_SEC : 0) + 60;
+        p.detail = `Avatar clips: ${p.faceDone} of ${p.faceTotal} ready`;
+        p.etaSec = (this.parallel ? (p.faceDone < p.faceTotal ? this.clipSec : 0) : (p.faceTotal - p.faceDone) * this.clipSec) + 60;
         break;
       case 'visuals':
         p.pct = Math.round(76 + 20 * (p.visualsDone / Math.max(1, p.beatsTotal)));

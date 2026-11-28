@@ -7,31 +7,27 @@ sentence to the next like one person talking; a short pause is only added betwee
 single generations are less stable).
 
 A take can stop early and cut off its last word, so every take is transcribed back with Whisper
-(src/voice/transcribe.py) and one that is missing words is generated again (up to --tries times);
+(src/reel/transcribe.py) and one that is missing words is generated again (up to --tries times);
 the most complete one is kept.
 
 Writes <out>.wav and <out>.json: {"sample_rate", "duration", "segments": one {text, start, end} per
 take (text = its lines joined by spaces)}. src/reel/timing.py finds where each line falls inside a take.
 
-Needs OPENROUTER_API_KEY in the environment (src/setup/common.sh loads the project's .env):
-    python src/voice/clone_voice.py --ref-audio voice.wav --ref-text voice.txt \
+Needs OPENROUTER_API_KEY, from the environment or the project's .env:
+    python src/reel/clone_voice.py --ref-audio voice.wav --ref-text voice.txt \
         --script script.txt --out speech.wav
 """
 import argparse
-import base64
 import difflib
 import io
 import json
 import os
-import re
 import subprocess
-import sys
 import time
-import urllib.error
-import urllib.request
 
 import numpy as np
 import soundfile as sf
+from api import data_uri, need_key, norm, request
 from transcribe import transcribe
 
 FFMPEG = os.environ.get("FFMPEG", "ffmpeg")
@@ -71,11 +67,6 @@ def trim_silence(wav: np.ndarray, sr: int, threshold_db: float = -45.0, keep_hea
     return wav[max(0, loud[0] - int(keep_head_s * sr)): min(len(wav), loud[-1] + int(keep_tail_s * sr))]
 
 
-def norm(text: str) -> str:
-    """Letters and digits only, lower case (as in src/reel/timing.py)."""
-    return re.sub(r"[^a-z0-9]+", "", text.lower().replace("’", "'"))
-
-
 def completeness(script: str, heard: str) -> float:
     """Share of the script's characters found, in order, in what Whisper heard. A missing last
     word counts double, since that is how a take usually fails."""
@@ -92,15 +83,7 @@ def speak(text: str, clip: str, ref_text: str, key: str) -> np.ndarray:
     """One take, cloning the reference clip (a data URI); mono float32 at SAMPLE_RATE, silence trimmed."""
     body = {"model": MODEL, "input": text, "response_format": "mp3", "input_references": [
         {"type": "input_audio", "input_audio": {"data": clip}}, {"type": "text", "text": ref_text}]}
-    req = urllib.request.Request("https://openrouter.ai/api/v1/audio/speech", data=json.dumps(body).encode(), method="POST",
-                                 headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
-    try:
-        with urllib.request.urlopen(req, timeout=300) as r:
-            mp3 = r.read()
-    except urllib.error.HTTPError as e:
-        sys.exit(f"Error: OpenRouter returned HTTP {e.code} for {MODEL}: {e.read().decode(errors='replace')[:400]}")
-    except urllib.error.URLError as e:
-        sys.exit(f"Error: could not reach OpenRouter: {e.reason}")
+    mp3 = request("https://openrouter.ai/api/v1/audio/speech", body, {"Authorization": f"Bearer {key}"}, name=f"OpenRouter ({MODEL})")
     pcm = subprocess.run([FFMPEG, "-hide_banner", "-loglevel", "error", "-i", "-", "-f", "f32le", "-ac", "1", "-ar", str(SAMPLE_RATE), "-"],
                          input=mp3, capture_output=True, check=True).stdout
     return trim_silence(np.frombuffer(pcm, dtype=np.float32).copy(), SAMPLE_RATE)
@@ -124,13 +107,10 @@ def main() -> None:
     ap.add_argument("--tries", type=int, default=3, help="generations per take when words are missing")
     args = ap.parse_args()
 
-    key = os.environ.get("OPENROUTER_API_KEY", "").strip()
-    if not key:
-        sys.exit("Error: OPENROUTER_API_KEY is not set; put it in the project's .env")
+    key = need_key("OPENROUTER_API_KEY")
     with open(args.ref_text, encoding="utf-8") as f:
         ref_text = " ".join(f.read().split())
-    with open(args.ref_audio, "rb") as f:
-        clip = "data:audio/wav;base64," + base64.b64encode(f.read()).decode()
+    clip = data_uri(args.ref_audio, "audio/wav")
     takes = group_takes(read_lines(args.script), args.take_words)
 
     t0 = time.time()

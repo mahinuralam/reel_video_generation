@@ -1,0 +1,16 @@
+{
+    "gesture": {
+        "max_chars": 200,
+        "rule": [
+            "face and split beats also have \"gesture\": a short direction for the avatar's hands and body during that beat, tied to a spoken word where it helps, e.g. \"Raises one open palm at chest height on 'first', then nods on 'works'.\"",
+            "Use one or two natural gestures per beat that fit what is said (open palms, pointing at the camera, a small shrug, a nod, leaning in) and vary them between beats.",
+            "Keep the hands in front of the chest and inside the frame for the whole gesture; do not bring them up from below the frame or drop them out of it.",
+            "Describe only hands, arms, head and posture, never the mouth or face.",
+            "At most MAX_CHARS characters."
+        ]
+    },
+    "constraints": [
+        "Throughout the clip the person looks exactly as in the photo: same face, hair, glasses and clothes.",
+        "Both hands are bare and empty, with plain skin, bare wrists and five natural fingers on each hand, and they look the same every time they appear."
+    ]
+}

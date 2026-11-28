@@ -4,7 +4,7 @@ import path from 'node:path';
 import { PROJECT_ROOT } from './config';
 
 // Checked against the real path (after symlinks), so a link cannot point outside these folders.
-const ALLOWED = ['outputs', 'inputs/photo', 'inputs/voice', 'webapp/data/uploads', 'webapp/data/mock'].map((p) => path.join(PROJECT_ROOT, p));
+const ALLOWED = ['outputs', 'inputs/photo', 'inputs/voice', 'webapp/data/uploads', 'webapp/data/mock'].map((p) => path.join(/*turbopackIgnore: true*/ PROJECT_ROOT, p));
 
 function inside(p: string, root: string) {
   return p === root || p.startsWith(root + path.sep);
@@ -18,7 +18,7 @@ export function resolveSafe(relPath: string): string | null {
   if (!ALLOWED.some((root) => inside(candidate, root))) return null;
   let real: string;
   try { real = fs.realpathSync(candidate); } catch { return null; }
-  // mock outputs are links into outputs/, which is allowed; nothing may resolve elsewhere
+  // a path may be a symlink; its real target must also be inside an allowed folder
   if (!ALLOWED.some((root) => inside(real, root))) return null;
   return real;
 }

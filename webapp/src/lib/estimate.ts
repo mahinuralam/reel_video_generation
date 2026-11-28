@@ -1,13 +1,25 @@
-// Time and cost estimates. The beats with the avatar (face and split screen) need a clip from HeyGen
-// Avatar 6 Turbo, $0.05 per second; Claude keeps them to at most about 70% of the words. The clips
-// render in parallel, about a minute and a half; the rest (design, voice, timing, graphics,
-// assembly) takes about three more minutes.
+// Time and cost estimates. The beats with the avatar (face and split screen) need a clip from the
+// avatar model, paid per second; Claude keeps them to at most about 70% of the words. Each engine in
+// avatar_engines.json gives a typical time per clip ("clip_sec") and whether its clips render at the
+// same time ("parallel"); the rest (design, voice, timing, graphics, assembly) takes about five minutes.
+import engines from '../../../src/reel/avatar_engines.json';
 
-export const WORDS_PER_SEC = 2.5;   // cloned voice: ~140 words in 56 s
+// Measured from recent reels (about 2.8 words/s); must match WORDS_PER_SECOND in src/reel/write_storyboard.py.
+export const WORDS_PER_SEC = 2.7;
+export const MAX_WORDS = 600;       // ~4 min of speech
+export const MAX_TITLE = 100;
 const FACE_SHARE = 0.65;
-const HEYGEN_USD_PER_SEC = 0.05;
+
+/** The avatar models src/reel/render_face.py can use (AVATAR_ENGINE), from the shared src/reel/avatar_engines.json. */
+export type AvatarEngine = keyof typeof engines;
+export const AVATARS = Object.fromEntries(
+  Object.entries(engines).map(([id, e]) => [id, { label: e.label, short: e.short, usdPerSec: e.usd_per_sec, clipSec: e.clip_sec, parallel: e.parallel }]),
+) as Record<AvatarEngine, { label: string; short: string; usdPerSec: number; clipSec: number; parallel: boolean }>;
+export const DEFAULT_AVATAR: AvatarEngine = 'heygen';
+export const isAvatar = (v: unknown): v is AvatarEngine => typeof v === 'string' && Object.hasOwn(AVATARS, v);
 const OTHER_USD = 0.15;             // Claude's design, the voice and the music ($0.04), a few cents each
 const MINUTES = 5;
+const BEAT_SEC = 5;                 // a typical on-camera beat
 
 export function countWords(text: string): number {
   return (text.trim().match(/\S+/g) || []).length;
@@ -36,9 +48,13 @@ export function fmtUsd(usd: number): string {
 }
 
 /** Before Claude has designed it: assume about two thirds of the speech with the avatar. */
-export function estimateVideo(script: string) {
+export function estimateVideo(script: string, avatar: AvatarEngine = DEFAULT_AVATAR) {
   const words = countWords(script);
   const speechSec = words / WORDS_PER_SEC;
-  const costUsd = words ? speechSec * FACE_SHARE * HEYGEN_USD_PER_SEC + OTHER_USD : 0;
-  return { words, speechSec, minutes: words ? MINUTES : 0, costUsd: Math.round(costUsd * 100) / 100 };
+  const a = AVATARS[avatar];
+  const costUsd = words ? speechSec * FACE_SHARE * a.usdPerSec + OTHER_USD : 0;
+  // engines that render one clip at a time add their clip time per on-camera beat
+  const clips = Math.ceil((speechSec * FACE_SHARE) / BEAT_SEC);
+  const minutes = words ? MINUTES + (a.parallel ? 0 : Math.round((clips * a.clipSec) / 60)) : 0;
+  return { words, speechSec, minutes, costUsd: Math.round(costUsd * 100) / 100 };
 }

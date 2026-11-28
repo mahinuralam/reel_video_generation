@@ -8,7 +8,8 @@ starts inside a take comes from these word times. From those: caption chunks and
 the time of every "cue" in the storyboard (a cue names a spoken word; the visual it belongs to
 appears when that word is said).
 
-Run with any Python 3 (standard library; FFMPEG and OPENROUTER_API_KEY from src/setup/common.sh):
+Run with any Python 3 (standard library; FFMPEG from src/setup/common.sh, OPENROUTER_API_KEY from the
+environment or the project's .env):
     python src/reel/timing.py --storyboard reels/<name>/storyboard.json \
         --speech outputs/reels/<name>/build/speech.wav --out outputs/reels/<name>/build/timeline.json
 """
@@ -19,18 +20,12 @@ import math
 import os
 import re
 import subprocess
-import sys
 import tempfile
 
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+from api import norm
+from transcribe import transcribe
+
 FFMPEG = os.environ.get("FFMPEG", "ffmpeg")
-sys.path.insert(0, os.path.join(ROOT, "src", "voice"))
-from transcribe import transcribe  # noqa: E402
-
-
-def norm(text: str) -> str:
-    """Letters and digits only, lower case: what both the script and Whisper agree on."""
-    return re.sub(r"[^a-z0-9]+", "", text.lower().replace("’", "'"))
 
 
 def slice_audio(src: str, start: float, end: float, dst: str) -> None:

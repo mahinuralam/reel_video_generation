@@ -5,16 +5,18 @@ import { useEffect, useRef, useState } from 'react';
 import { Icon } from '@/components/Icon';
 import { StatusBadge } from '@/components/StatusBadge';
 import { api, elapsedSec, fileUrl, fmtWhen, usePoll } from '@/lib/client';
-import { fmtDuration, fmtLeft, fmtMinutes, fmtUsd } from '@/lib/estimate';
+import { AVATARS, DEFAULT_AVATAR, fmtDuration, fmtLeft, fmtMinutes, fmtUsd } from '@/lib/estimate';
 import type { Beat, Job, Profile } from '@/lib/types';
 
 type JobResp = { job: Job; queue: { count: number; waitSec: number } | null };
 type StepDef = { label: string; stages: string[]; detail: (j: Job) => string };
 
+const avatarOf = (j: Job) => AVATARS[j.input.avatar ?? DEFAULT_AVATAR];
+
 const STEPS: StepDef[] = [
   { label: 'Design', stages: ['design'], detail: (j) => (j.input.beats ? `Claude planned ${j.input.beats.length} beats` : 'Claude plans the beats and graphics') },
   { label: 'Voice', stages: ['speech', 'timing'], detail: (j) => (j.speechSec ? `${j.speechSec.toFixed(1)} s of speech` : 'The chosen voice reads the script') },
-  { label: 'Avatar clips', stages: ['face'], detail: (j) => (j.progress.faceTotal ? `${j.progress.faceDone ?? 0} of ${j.progress.faceTotal} from HeyGen` : 'On-camera beats, by HeyGen') },
+  { label: 'Avatar clips', stages: ['face'], detail: (j) => (j.progress.faceTotal ? `${j.progress.faceDone ?? 0} of ${j.progress.faceTotal} from ${avatarOf(j).short}` : `On-camera beats, by ${avatarOf(j).short}`) },
   { label: 'Graphics', stages: ['visuals'], detail: (j) => `${j.progress.visualsDone ?? 0} of ${j.progress.beatsTotal || '?'} beats drawn` },
   { label: 'Assemble', stages: ['assemble', 'done'], detail: () => '1080×1920 MP4' },
 ];
@@ -92,7 +94,7 @@ export default function JobPage() {
           </div>
         </div>
         <p className="lede">
-          {photo?.label ?? job.input.photoId} image · {voice?.label ?? job.input.voiceId} voice · designed by Claude
+          {photo?.label ?? job.input.photoId} image · {voice?.label ?? job.input.voiceId} voice · {avatarOf(job).label} · designed by Claude
           {job.startedAt ? ` · started ${fmtWhen(job.startedAt)}` : ` · added ${fmtWhen(job.createdAt)}`}
           {job.mock ? ' · mock run' : ''}
         </p>
@@ -161,6 +163,7 @@ export default function JobPage() {
                   <li key={b.id} className={`beat ${b.type}`}>
                     <b>{beatLabel(b)}</b>
                     <span>{b.lines.join(' ')}</span>
+                    {b.gesture ? <span className="muted small">Gesture: {b.gesture}</span> : null}
                   </li>
                 ))}
               </ol>
@@ -170,7 +173,6 @@ export default function JobPage() {
           <section className="card" aria-labelledby="in-h">
             <h2 id="in-h">Inputs</h2>
             <div className="inputs">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               {photo ? <img className="input-img" src={fileUrl(photo.file)} alt={`${photo.label} image`} /> : null}
               <div className="stack grow">
                 {job.speechPath ? (
@@ -190,7 +192,7 @@ export default function JobPage() {
             <h2 id="log-h">Log</h2>
             {job.logPath ? <button type="button" className="btn btn-small" onClick={() => setFullLog((v) => !v)}>{fullLog ? 'Short log' : 'Full log'}</button> : null}
           </div>
-          {log.data?.lines.length ? <pre className="log" ref={logRef}>{log.data.lines.join('\n')}</pre> : <p className="help" style={{ margin: 0 }}>'The log starts when the job does.'</p>}
+          {log.data?.lines.length ? <pre className="log" ref={logRef}>{log.data.lines.join('\n')}</pre> : <p className="help" style={{ margin: 0 }}>The log starts when the job does.</p>}
           {job.logPath ? <span className="help mono">{job.logPath}</span> : null}
         </section>
       </div>

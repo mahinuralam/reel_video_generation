@@ -73,7 +73,7 @@ h2 { font-size: 18px; }
 /* create page */
 .create { display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 980px; margin: 0 auto; }
 .prompt { position: relative; border-radius: 22px; background: #161618; border: 1px solid var(--line-2); box-shadow: 0 0 0 1px rgba(167,139,250,.08), 0 20px 80px -20px rgba(236,72,153,.35), 0 10px 60px -30px rgba(251,146,108,.5); }
-.prompt-title { display: block; width: 100%; padding: 18px 22px 0; border: 0; background: transparent; font-size: 19px; font-weight: 600; color: var(--text); }
+.prompt-title { display: block; width: 100%; padding: 18px 22px 0; border: 0; background: transparent; font-size: 19px; font-weight: 600; color: var(--ink); }
 .prompt-title::placeholder { color: var(--muted); font-weight: 500; }
 .prompt-title:focus-visible { outline: none; }
 .prompt textarea { display: block; width: 100%; min-height: 150px; padding: 20px 22px 8px; border: 0; background: transparent; resize: vertical; font-size: 17px; line-height: 1.6; }
